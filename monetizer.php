@@ -185,7 +185,8 @@ function monetizer_plans(){
 	
 	// Get all monetizer plans
 	$args = array(
-		'post_type' => 'monetizer'
+		'post_type' => 'monetizer',
+		'posts_per_page' => -1
 	);
 	$plans = get_posts($args);
 

@@ -144,6 +144,7 @@ function save_custom_boxes( $post_id ) {
   $plan_amount = $_POST['plan_amount'];
   update_post_meta( $post_id, 'plan_duration', $plan_duration );
   update_post_meta( $post_id, 'plan_callback', $callback_endpoint );
+  update_post_meta( $post_id, 'plan_amount', $plan_amount );
   // Add slug to categories
   	$cat_id = get_cat_ID( $slug );
 	// check if thanks page exists:

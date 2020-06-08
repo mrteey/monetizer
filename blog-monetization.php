@@ -1,15 +1,15 @@
 <?php
 /*
-Plugin Name: Blog Monitization
+Plugin Name: Blog Monetization
 Plugin URI: https://mrteey.com
-Description: Blog Monitization Plug, Allows View of Single Post only by registred users.
+Description: Blog Monetization Plug, Allows View of Single Post only by registred users.
 Author: Mr.Teey
-Version: 2.1
+Version: 2.2
 Author URI: https://mrteey.com
 License: GPL2
 */
 
-// Create Plugin UI
+// Create Plugin UI //Custom Post Page
 // Plans Creator
 add_action( 'init', 'blog_monetizer_custom_post_type' );
 add_filter( 'post_updated_messages', 'blog_monetizer_messages' );
@@ -60,7 +60,27 @@ function plans_updated_messages( $messages ) {
   add_filter( 'post_updated_messages', 'plans_updated_messages' );
 
 //   Meta Boxes
-// Duration Box
+// Amount Box
+add_action( 'add_meta_boxes', 'plan_amount_box' );
+function plan_amount_box() {
+    add_meta_box( 
+        'plan_amount_box',
+        __( 'Plan Amount', 'myplugin_textdomain' ),
+        'plan_amount_box_content',
+        'monetizer',
+        'normal',
+        'high'
+    );
+}
+
+function plan_amount_box_content( $post ) {
+	$amount = get_post_meta( get_the_ID(), 'plan_amount', TRUE );
+	wp_nonce_field( plugin_basename( __FILE__ ), 'plan_amount_box_content_nonce' );
+	echo '<label for="plan_amount"></label>';
+	echo '<input type="number" name="plan_amount" size="30" id="plan_amount" style="width:100%" placeholder="Enter plan amount" value="'.$amount.'"/>';
+  }
+
+  // Duration Box
 add_action( 'add_meta_boxes', 'plan_duration_box' );
 function plan_duration_box() {
     add_meta_box( 
@@ -101,9 +121,9 @@ function plan_callback_box_content( $post ) {
   }
 
 
-// Saving Plan Callback
-add_action( 'save_post', 'plan_callback_box_save' );
-function plan_callback_box_save( $post_id ) {
+// Save Custom Boxes
+add_action( 'save_post', 'save_custom_boxes' );
+function save_custom_boxes( $post_id ) {
   if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) 
   return;
 
@@ -117,9 +137,11 @@ function plan_callback_box_save( $post_id ) {
     if ( !current_user_can( 'edit_post', $post_id ) )
     return;
   }
-  $post_title = strtolower($_POST['post_title']);
-  $slug = str_replace(" ", "-", $post_title);
+  $post_title = $_POST['post_title'];
+  $slug = strtolower(str_replace(" ", "-", $post_title));
   $callback_endpoint = "/paid?plan=".$slug;
+  $plan_duration = $_POST['plan_duration'];
+  update_post_meta( $post_id, 'plan_duration', $plan_duration );
   update_post_meta( $post_id, 'plan_callback', $callback_endpoint );
   // Add slug to categories
   	$cat_id = get_cat_ID( $slug );
@@ -132,52 +154,24 @@ function plan_callback_box_save( $post_id ) {
 			// Insert the post into the database
 			wp_insert_category( $cat );
 		}
+	// Check if Paystack Forms Exist
+	if( class_exists( 'Payment Forms for Paystack' ) ) {
+		// If Plugin Exist
+		// Create a new paystack form post object
+		$form = array(
+			'post_type'     => 'paystack_form',
+			'post_title'    => $post_title,
+			'post_content'  => '[text name="Phone Number"]',
+			'post_status'   => 'publish',
+			'post_author'   => 1
+		);
+		
+		// Insert the form into the database
+		$form_id = wp_insert_post( $form );
+		update_post_meta( $form_id, '_amount', $plan_amount );
+		update_post_meta( $form_id, '_redirect', $callback_endpoint );
+	}
 }
-
-// Saving Plan Duration
-add_action( 'save_post', 'plan_duration_box_save' );
-function plan_duration_box_save( $post_id ) {
-
-  if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) 
-  return;
-
-  if ( !wp_verify_nonce( $_POST['plan_duration_box_content_nonce'], plugin_basename( __FILE__ ) ) )
-  return;
-
-  if ( 'page' == $_POST['post_type'] ) {
-    if ( !current_user_can( 'edit_page', $post_id ) )
-    return;
-  } else {
-    if ( !current_user_can( 'edit_post', $post_id ) )
-    return;
-  }
-  $plan_duration = $_POST['plan_duration'];
-  update_post_meta( $post_id, 'plan_duration', $plan_duration );
-}
- 
-// function blog_monetizer_messages( $messages ) {
-//     $post = get_post();
- 
-//     $messages['recipe'] = array(
-//         0  => '',
-//         1  => 'Recipe updated.',
-//         2  => 'Custom field updated.',
-//         3  => 'Custom field deleted.',
-//         4  => 'Recipe updated.',
-//         5  => isset( $_GET['revision'] ) ? sprintf( 'Recipe restored to revision from %s',wp_post_revision_title( (int) $_GET['revision'], false ) ) : false,
-//         6  => 'Recipe published.',
-//         7  => 'Recipe saved.',
-//         8  => 'Recipe submitted.',
-//         9  => sprintf(
-//             'Recipe scheduled for: <strong>%1$s</strong>.',
-//             date_i18n( 'M j, Y @ G:i', strtotime( $post->post_date ) )
-//         ),
-//         10 => 'Recipe draft updated.'
-//     );
- 
-//     return $messages;
-// }
-
 
 // Create Profile Shortcode
 function monetizer_user_profile(){
@@ -273,17 +267,6 @@ function prepare_plugin() {
 register_activation_hook( __FILE__, 'prepare_plugin' );
 
 
-//Remove Admin Bar Except for Administrator
-
-// add_action('after_setup_theme', 'remove_admin_bar');
- 
-// function remove_admin_bar() {
-// if (!current_user_can('administrator') && !is_admin()) {
-//   show_admin_bar(false);
-// }
-// }
-
-
 //Redirect from Single post if not logged in
  
 add_action( 'template_redirect', 'redirect_from_post' );
@@ -300,32 +283,14 @@ if ( is_single() and !is_admin()) {
 		exit;
 	}
 	// Redirect them to upgrade if trying to view a premium or vip post
-	elseif (!has_category($user_plan) && !has_category('Free')){
+	elseif (!has_term($user_plan, 'Free', 'Uncategorized')){
 		wp_redirect( '/upgrade', 302 ); 
 		exit;
 	}
-	// Check if user has a premium plan
-	// Redirect them to upgrade if trying to view a vip post
-	// elseif (strpos($plan, 'premium') !== false){
-	// 	if (has_category('vip')){
-	// 		wp_redirect( '/upgrade', 302 ); 
-	// 		exit;
-	// 	}
-	// }
 }
 
 }
 
-
-
-//remove comments if user not logged in
-// add_action('init', 'remove_comment_support', 100);
-
-// function remove_comment_support() {
-//     if (! is_user_logged_in()) {
-//         remove_post_type_support( 'post', 'comments' );
-//     }
-// }
 
 //UPDATE USER PAYMENT DETAILS ON PAYMENT
 add_action( 'template_redirect', 'redirect_from_paid_page' );
@@ -347,37 +312,6 @@ if ( is_page('Paid')){
 }
 
 }
-
-
-
-// Block Access to /wp-admin for non admins.
-// function custom_blockusers_init() {
-//   if ( is_user_logged_in() && is_admin() && !current_user_can( 'administrator' ) ) {
-//     wp_redirect( home_url() );
-//     exit;
-//   }
-// }
-// add_action( 'init', 'custom_blockusers_init' ); // Hook into 'init'
-
-
-//Redirect after logout
-// add_action( 'wp_logout', 'auto_redirect_external_after_logout');
-// function auto_redirect_external_after_logout(){
-//   wp_redirect( '/' );
-//   exit();
-// }
-
-
-//Login & Logout Links
-// add_filter('wp_nav_menu_items', 'add_login_logout_link', 10, 2);
-// function add_login_logout_link($items, $args) {
-//         ob_start();
-//         wp_loginout('index.php');
-//         $loginoutlink = ob_get_contents();
-//         ob_end_clean();
-//         $items .= '<li>'. $loginoutlink .'</li>';
-//     return $items;
-// }
 
 
 //Check User Validity On Load

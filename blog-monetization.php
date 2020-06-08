@@ -76,6 +76,8 @@ function plan_amount_box() {
 function plan_amount_box_content( $post ) {
 	$amount = get_post_meta( get_the_ID(), 'plan_amount', TRUE );
 	wp_nonce_field( plugin_basename( __FILE__ ), 'plan_amount_box_content_nonce' );
+	// HIDE SLUG
+	echo "<style>#edit-slug-box,#message p > a{display:none;}</style>";
 	echo '<label for="plan_amount"></label>';
 	echo '<input type="number" name="plan_amount" size="30" id="plan_amount" style="width:100%" placeholder="Enter plan amount" value="'.$amount.'"/>';
   }
@@ -159,19 +161,29 @@ function save_custom_boxes( $post_id ) {
 	// Check if Paystack Forms Exist
 	if( function_exists( 'kkd_pff_init' ) ) {
 		// If Plugin Exist
-		// Create a new paystack form post object
-		$form = array(
-			'post_type'     => 'paystack_form',
-			'post_title'    => $post_title,
-			'post_content'  => '[text name="Phone Number"]',
-			'post_status'   => 'publish',
-			'post_author'   => 1
+		// Check if similar form already exist
+		$args = array(
+			'name' => $slug,
+			'post_type' => 'paystack_form'
 		);
-		
-		// Insert the form into the database
-		$form_id = wp_insert_post( $form );
-		update_post_meta( $form_id, '_amount', $plan_amount );
-		update_post_meta( $form_id, '_redirect', $callback_endpoint );
+		$form = get_posts($args)[0];
+
+		if (!$form){
+			// Create a new paystack form post object
+			$form = array(
+				'post_type'     => 'paystack_form',
+				'post_title'    => $post_title,
+				'post_content'  => '[text name="Phone Number"]',
+				'post_status'   => 'publish',
+				'post_author'   => 1
+			);
+			
+			// Insert the form into the database
+			$post_id = wp_insert_post( $form );
+			update_post_meta( $post_id, '_amount', $plan_amount );
+			update_post_meta( $post_id, '_redirect', $callback_endpoint );
+			update_post_meta( $post_id, '_currency', 'NGN' );
+		}
 	}
 }
 

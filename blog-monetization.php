@@ -141,6 +141,7 @@ function save_custom_boxes( $post_id ) {
   $slug = strtolower(str_replace(" ", "-", $post_title));
   $callback_endpoint = "/paid?plan=".$slug;
   $plan_duration = $_POST['plan_duration'];
+  $plan_amount = $_POST['plan_amount'];
   update_post_meta( $post_id, 'plan_duration', $plan_duration );
   update_post_meta( $post_id, 'plan_callback', $callback_endpoint );
   // Add slug to categories

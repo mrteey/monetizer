@@ -183,6 +183,7 @@ function save_custom_boxes( $post_id ) {
 			update_post_meta( $post_id, '_amount', $plan_amount );
 			update_post_meta( $post_id, '_redirect', $callback_endpoint );
 			update_post_meta( $post_id, '_currency', 'NGN' );
+			update_post_meta( $post_id, '_loggedin', 'no' );
 		}
 		// Check if similar payment page already exist
 		$args = array(
@@ -196,7 +197,7 @@ function save_custom_boxes( $post_id ) {
 			$content = array(
 				'post_type'     => 'page',
 				'post_title'    => $post_title,
-				'post_content'  => '[pff-paystack id='.$post_id.'"]',
+				'post_content'  => '[pff-paystack id="'.$post_id.'"]',
 				'post_status'   => 'publish',
 				'post_author'   => 1
 			);

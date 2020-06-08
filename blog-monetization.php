@@ -284,19 +284,6 @@ function save_custom_boxes( $post_id ) {
 			// Insert the page into the database
 			wp_insert_post( $content );
 		}
-
-		$plans_page = get_page_by_path( 'plans' );
-		if (empty($plans_page)){
-			$content = array(
-				'post_type'     => 'page',
-				'post_title'    => 'Plans',
-				'post_content'  => '[monetizer_plans]',
-				'post_status'   => 'publish',
-				'post_author'   => 1
-			);
-			// Push page to db
-			wp_insert_post( $content );
-		}
 	}
 }
 
@@ -374,8 +361,20 @@ function prepare_plugin() {
 	$paid = get_page_by_path( 'paid' );
 	$upgrade = get_page_by_path( 'upgrade' );
 	$dash = get_page_by_path( 'user-account-info' );
+	$plans_page = get_page_by_path( 'plans' );
 
-	
+	// Check if plans page exist
+	if (empty($plans_page)){
+		$content = array(
+			'post_type'     => 'page',
+			'post_title'    => 'Plans',
+			'post_content'  => '[monetizer_plans]',
+			'post_status'   => 'publish',
+			'post_author'   => 1
+		);
+		// Push page to db
+		wp_insert_post( $content );
+	}
 
 	// check if thanks page exist:
 		if (empty($dash)){

@@ -1,10 +1,10 @@
 <?php
 /*
-Plugin Name: Blog Monetization
+Plugin Name: Monetizer
 Plugin URI: https://mrteey.com
 Description: Blog Monetization Plug, Allows View of Single Post only by registred users.
 Author: Mr.Teey
-Version: 2.2
+Version: 2.5
 Author URI: https://mrteey.com
 License: GPL2
 */

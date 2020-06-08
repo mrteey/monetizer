@@ -1,8 +1,8 @@
-Plugin Name: Blog Monetization
+Plugin Name: Monetizer
 Plugin URI: http://www.mrteey.com/
 Description: Blog Monetization Plug, Allows View of Single Post only by registred users with a plan, works with any payment gateway.
 Author: Mr.Teey
-Version: 2.2
+Version: 2.5
 Author URI: http://www.mrteey.com
 License: GPL2
 

@@ -185,6 +185,7 @@ function save_custom_boxes( $post_id ) {
 			update_post_meta( $post_id, '_currency', 'NGN' );
 			update_post_meta( $post_id, '_loggedin', 'no' );
 			update_post_meta( $post_id, '_txncharge', 'merchant' );
+			update_post_meta( $post_id, '_paybtn', 'Pay' );
 		}
 		// Check if similar payment page already exist
 		$args = array(

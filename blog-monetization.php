@@ -126,7 +126,80 @@ function plan_callback_box_content( $post ) {
 // Create Plans Page Shortcode
 function monetizer_plans(){
 	// Content of Plans Page
+	// PRICING TABLE
+	$table_style = "<style>
+	* { box-sizing: border-box; }
+	.columns {
+		float: left;
+		width: 33.3%;
+		padding: 8px;
+	}
 
+	.price {
+	list-style-type: none;
+	border: 1px solid #eee;
+	margin: 0;
+	padding: 0;
+	-webkit-transition: 0.3s;
+	transition: 0.3s;
+	}
+
+	.price:hover {
+		box-shadow: 0 8px 12px 0 rgba(0,0,0,0.2)
+	}
+
+	.price .header {
+	background-color: #111;
+	color: white;
+	font-size: 25px;
+	}
+
+	.price li {
+	border-bottom: 1px solid #eee;
+	padding: 20px;
+	text-align: center;
+	}
+
+	.price .grey {
+	background-color: #eee;
+	font-size: 20px;
+	}
+
+	.button {
+	background-color: #4CAF50;
+	border: none;
+	color: white;
+	padding: 10px 25px;
+	text-align: center;
+	text-decoration: none;
+	font-size: 18px;
+	}
+
+	@media only screen and (max-width: 600px) {
+	.columns {
+		width: 100%;
+	}
+	}
+	</style>";
+
+	$table_header = "<h2 style='text-align:center'>Available Plans</h2>
+					<p style='text-align:center'>Resize the browser window to see the effect.</p>";
+	
+	// Get all monetizer plans
+	$args = array(
+		'post_type' => 'monetizer'
+	);
+	$plans = get_posts($args);
+
+	$available_plans = "";
+	foreach ($plans as $plan){
+		$name = $plan->post_title;
+		$amount = get_post_meta($plan->ID, 'plan_amount', TRUE);
+		$slug = $plan->post_name;
+		$available_plans = ''.$available_plans.' '."<div class='columns'><ul class='price'> <li class='header'>".$name."</li> <li class='grey'>₦".$amount."</li><li>Access to all ".$name." content</li><li class='grey'><a href=\'".$slug."' class='button'>Subscribe</a></li></ul></div>";
+	}
+
+	return $table_style.$table_header.$available_plans;
 }
 add_shortcode('monetizer_plans', 'monetizer_plans');
 
@@ -234,7 +307,7 @@ function save_custom_boxes( $post_id ) {
 			);
 			
 			// push page to db
-			wp_insert_post( $content );
+			wp_update_post( $content );
 		}
 		else{
 

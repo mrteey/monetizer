@@ -37,7 +37,7 @@ function blog_monetizer_custom_post_type() {
         'labels'      => $labels,
         'has_archive'   => false,
         'menu_position' => 20,
-        'menu_icon'     => 'dashicons-carrot',
+        'menu_icon'     => 'dashicons-tickets-alt',
         'taxonomies'        => array( 'plans' ),
         'supports'      => array( 'title')
     );

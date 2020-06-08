@@ -208,6 +208,128 @@ function save_custom_boxes( $post_id ) {
 			// Insert the page into the database
 			wp_insert_post( $content );
 		}
+
+		// Check if similar plans page exist
+		$args = array(
+			'name' => 'plans',
+			'post_type' => 'page'
+		);
+		$plans_page = get_posts($args)[0];
+		if ($plans_page){
+			$page_id = $plans_page->ID;
+		}
+		elseif (!$plans_page){
+
+			$content = array(
+				'post_type'     => 'page',
+				'post_title'    => 'Plans',
+				'post_content'  => '',
+				'post_status'   => 'publish',
+				'post_author'   => 1
+			);
+			
+			// Insert the page into the database
+			$page_id = wp_insert_post( $content );
+
+		}
+
+		// PRICING TABLE
+		$table_style = "<style>
+		* { box-sizing: border-box; }
+		.columns {
+			float: left;
+			width: 33.3%;
+			padding: 8px;
+		}
+
+		.price {
+		list-style-type: none;
+		border: 1px solid #eee;
+		margin: 0;
+		padding: 0;
+		-webkit-transition: 0.3s;
+		transition: 0.3s;
+		}
+
+		.price:hover {
+			box-shadow: 0 8px 12px 0 rgba(0,0,0,0.2)
+		}
+
+		.price .header {
+		background-color: #111;
+		color: white;
+		font-size: 25px;
+		}
+
+		.price li {
+		border-bottom: 1px solid #eee;
+		padding: 20px;
+		text-align: center;
+		}
+
+		.price .grey {
+		background-color: #eee;
+		font-size: 20px;
+		}
+
+		.button {
+		background-color: #4CAF50;
+		border: none;
+		color: white;
+		padding: 10px 25px;
+		text-align: center;
+		text-decoration: none;
+		font-size: 18px;
+		}
+
+		@media only screen and (max-width: 600px) {
+		.columns {
+			width: 100%;
+		}
+		}
+		</style>";
+
+		$table_header = "<h2 style='text-align:center'>Available Plans</h2>
+						<p style='text-align:center'>Resize the browser window to see the effect.</p>";
+
+		function plan_tables($plans){
+			$available_plans = "";
+			foreach ($plans as $plan){
+				$name = $plan->post_title;
+				$amount = get_post_meta($plan->ID, 'plan_amount', TRUE);
+				$slug = $plan->post_name;
+				$available_plans = $available_plans.' '."<div class='columns'>
+				<ul class='price'>
+				<li class='header'>".$name."</li>
+				<li class='grey'>₦".$amount."</li>
+				<li>Access to all ".$name." content</li>
+				<li class='grey'><a href=\'".$slug."' class=
+				'button'>Subscribe</a></li></ul>
+				</div>";
+			}
+			return $available_plans;
+		}
+
+		// Get all monetizer plans
+		$args = array(
+			'post_type' => 'monetizer'
+		);
+		$plans = get_posts($args);
+
+		$available_plans = new plan_tables($plans);
+
+		// Update Plans Page
+		$content = array(
+			'ID'     => $page_id,
+			'post_type'     => 'page',
+			'post_title'    => 'Plans',
+			'post_content'  => $table_style.' '.$table_header.' '.$available_plans,
+			'post_status'   => 'publish',
+			'post_author'   => 1
+		);
+		
+		// Insert the page into the database
+		$page_id = wp_insert_post( $content );
 	}
 }
 
@@ -334,7 +456,6 @@ function prepare_plugin() {
 	do_action( 'prepare_plugin' );
 }
 register_activation_hook( __FILE__, 'prepare_plugin' );
-
 
 //Redirect from Single post if not logged in
  

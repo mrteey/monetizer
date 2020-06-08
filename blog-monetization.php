@@ -269,13 +269,9 @@ function save_custom_boxes( $post_id ) {
 			update_post_meta( $post_id, '_successmsg', 'Thank you for paying!' );
 		}
 		// Check if similar payment page already exist
-		$args = array(
-			'name' => $slug,
-			'post_type' => 'page'
-		);
-		$page = get_posts($args)[0];
+		$payment_page = get_page_by_path( $slug );
 
-		if (!$page){
+		if (empty($payment_page)){
 			// Create a new paystack form post object
 			$content = array(
 				'post_type'     => 'page',
@@ -289,28 +285,8 @@ function save_custom_boxes( $post_id ) {
 			wp_insert_post( $content );
 		}
 
-		// Check if plans page exist already
-		$args = array(
-			'name' => 'plans',
-			'post_type' => 'page'
-		);
-		$plans_page = get_posts($args)[0];
-		if ($plans_page){
-			// Update Plans Page
-			$content = array(
-				'ID'     => $plans_page->ID,
-				'post_type'     => 'page',
-				'post_title'    => 'Plans',
-				'post_content'  => '[monetizer_plans]',
-				'post_status'   => 'publish',
-				'post_author'   => 1
-			);
-			
-			// push page to db
-			wp_update_post( $content );
-		}
-		else{
-
+		$plans_page = get_page_by_path( 'plans' );
+		if (empty($plans_page)){
 			$content = array(
 				'post_type'     => 'page',
 				'post_title'    => 'Plans',
@@ -318,7 +294,6 @@ function save_custom_boxes( $post_id ) {
 				'post_status'   => 'publish',
 				'post_author'   => 1
 			);
-
 			// Push page to db
 			wp_insert_post( $content );
 		}

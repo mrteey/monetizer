@@ -460,8 +460,8 @@ if ( is_single() and !is_admin()) {
 		wp_redirect( '/plans', 302 ); 
 		exit;
 	}
-	// Redirect them to upgrade if trying to view a premium or vip post
-	elseif (!has_term($user_plan, 'Free', 'Uncategorized')){
+	// Redirect them to upgrade if trying to view a premium post
+	elseif (!has_category($user_plan) && !has_category('Free') && !has_category('Uncategorized')){
 		wp_redirect( '/upgrade', 302 ); 
 		exit;
 	}

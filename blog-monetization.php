@@ -157,7 +157,7 @@ function save_custom_boxes( $post_id ) {
 			wp_insert_category( $cat );
 		}
 	// Check if Paystack Forms Exist
-	if( is_plugin_active( 'paystack-forms/paystack-forms.php' ) ) {
+	if( function_exists( 'kkd_pff_init' ) ) {
 		// If Plugin Exist
 		// Create a new paystack form post object
 		$form = array(

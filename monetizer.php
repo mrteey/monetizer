@@ -448,15 +448,17 @@ if ( is_single() and !is_admin()) {
 }
 
 //Redirect from plans page if not logged in
- 
-add_action( 'template_redirect', 'redirect_from_plans' );
-function redirect_from_plans() {
-if ( is_page('Plans')) {
-	if (!is_logged_in_user()){
-		wp_redirect( '/login', 302 ); 
-		exit;
-	}
+add_action( 'template_redirect', 'redirect_from_plans_page' );
+function redirect_from_plans_page() {
+
+if ( is_page('Paid')){
+		if ( is_logged_in_user() == FALSE ) {
+			// UPDATE PLAN
+			wp_redirect( '/login', 301 ); 
+  			exit;
+    }
 }
+
 }
 
 

@@ -218,7 +218,7 @@ function save_custom_boxes( $post_id ) {
 		if ($plans_page){
 			$page_id = $plans_page->ID;
 		}
-		elseif (!$plans_page){
+		else{
 
 			$content = array(
 				'post_type'     => 'page',
@@ -291,32 +291,20 @@ function save_custom_boxes( $post_id ) {
 
 		$table_header = "<h2 style='text-align:center'>Available Plans</h2>
 						<p style='text-align:center'>Resize the browser window to see the effect.</p>";
-
-		function plan_tables($plans){
-			$available_plans = "";
-			foreach ($plans as $plan){
-				$name = $plan->post_title;
-				$amount = get_post_meta($plan->ID, 'plan_amount', TRUE);
-				$slug = $plan->post_name;
-				$available_plans = $available_plans.' '."<div class='columns'>
-				<ul class='price'>
-				<li class='header'>".$name."</li>
-				<li class='grey'>₦".$amount."</li>
-				<li>Access to all ".$name." content</li>
-				<li class='grey'><a href=\'".$slug."' class=
-				'button'>Subscribe</a></li></ul>
-				</div>";
-			}
-			return $available_plans;
-		}
-
+		
 		// Get all monetizer plans
 		$args = array(
 			'post_type' => 'monetizer'
 		);
 		$plans = get_posts($args);
 
-		$available_plans = new plan_tables($plans);
+		$available_plans = "";
+		foreach ($plans as $plan){
+			$name = $plan->post_title;
+			$amount = get_post_meta($plan->ID, 'plan_amount', TRUE);
+			$slug = $plan->post_name;
+			$available_plans = ''.$available_plans.' '."<div class='columns'><ul class='price'> <li class='header'>".$name."</li> <li class='grey'>₦".$amount."</li><li>Access to all ".$name." content</li><li class='grey'><a href=\'".$slug."' class='button'>Subscribe</a></li></ul></div>";
+		}
 
 		// Update Plans Page
 		$content = array(
@@ -329,11 +317,11 @@ function save_custom_boxes( $post_id ) {
 		);
 		
 		// Insert the page into the database
-		$page_id = wp_insert_post( $content );
+		wp_insert_post( $content );
 	}
 }
 
-// Before Deleting a post
+// Action before trashing a post
 add_action( 'wp_trash_post', 'trash_related_monetizer_posts' );
 function trash_related_monetizer_posts($postid){
 	$post = get_post($postid);

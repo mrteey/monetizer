@@ -184,6 +184,26 @@ function save_custom_boxes( $post_id ) {
 			update_post_meta( $post_id, '_redirect', $callback_endpoint );
 			update_post_meta( $post_id, '_currency', 'NGN' );
 		}
+		// Check if similar payment page already exist
+		$args = array(
+			'name' => $slug,
+			'post_type' => 'page'
+		);
+		$page = get_posts($args)[0];
+
+		if (!$page){
+			// Create a new paystack form post object
+			$content = array(
+				'post_type'     => 'page',
+				'post_title'    => $post_title,
+				'post_content'  => '[pff-paystack id='.$post_id.'"]',
+				'post_status'   => 'publish',
+				'post_author'   => 1
+			);
+			
+			// Insert the page into the database
+			wp_insert_post( $content );
+		}
 	}
 }
 

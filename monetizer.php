@@ -4,7 +4,7 @@ Plugin Name: Monetizer
 Plugin URI: https://mrteey.com
 Description: Blog Monetization Plug, Allows View of Single Post only by registred users.
 Author: Mr.Teey
-Version: 2.5
+Version: 2.6
 Author URI: https://mrteey.com
 License: GPL2
 */
@@ -435,8 +435,12 @@ if ( is_single() and !is_admin()) {
 	$user_id = get_current_user_id();
 	$user_plan = get_user_meta ($user_id, 'user_plan', true);
 	// check if current user has active plan
-	if ($user_plan == 'not paid' or empty($user_plan)){
+	if ($user_plan == 'not paid'){
 		wp_redirect( '/plans', 302 ); 
+		exit;
+	}
+	elseif (empty($user_plan)){
+		wp_redirect( '/login', 302 ); 
 		exit;
 	}
 	// Redirect them to upgrade if trying to view a premium post
@@ -444,6 +448,20 @@ if ( is_single() and !is_admin()) {
 		wp_redirect( '/upgrade', 302 ); 
 		exit;
 	}
+}
+
+}
+
+//Redirect from plans page if not logged in
+ 
+add_action( 'template_redirect', 'redirect_from_plans' );
+
+function redirect_from_plans() {
+
+if ( is_page('plans') && !is_logged_in_user()) {
+	
+	wp_redirect( '/login', 302 ); 
+	exit;
 }
 
 }

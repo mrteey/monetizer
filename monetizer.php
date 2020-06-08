@@ -18,8 +18,8 @@ function blog_monetizer_custom_post_type() {
     $labels = array(
         'name'               => 'Monetizer Plans',
         'singular_name'      => 'Monetizer Plan',
-        'menu_name'          => 'Blog Monetizer',
-        'name_admin_bar'     => 'Blog Monetizer',
+        'menu_name'          => 'Monetizer',
+        'name_admin_bar'     => 'Monetizer',
         'add_new'            => 'Add New',
         'add_new_item'       => 'Add New Plan',
         'new_item'           => 'New Plan',
@@ -37,7 +37,7 @@ function blog_monetizer_custom_post_type() {
         'labels'      => $labels,
         'has_archive'   => false,
         'menu_position' => 20,
-        'menu_icon'     => 'dashicons-tickets-alt',
+        'menu_icon'     => 'dashicons-tag',
         'taxonomies'        => array( 'plans' ),
         'supports'      => array( 'title')
     );

@@ -182,8 +182,6 @@ function monetizer_plans(){
 	}
 	</style>";
 
-	$table_header = "<h2 style='text-align:center'>Available Plans</h2>
-					<p style='text-align:center'>Resize the browser window to see the effect.</p>";
 	
 	// Get all monetizer plans
 	$args = array(
@@ -191,12 +189,14 @@ function monetizer_plans(){
 	);
 	$plans = get_posts($args);
 
+	$table_header = "<h2 style='text-align:center'>".count($plans)." Available Plans</h2><p style='text-align:center'>Select a plan to make payment!</p>";
+
 	$available_plans = "";
 	foreach ($plans as $plan){
 		$name = $plan->post_title;
 		$amount = get_post_meta($plan->ID, 'plan_amount', TRUE);
 		$slug = $plan->post_name;
-		$available_plans = ''.$available_plans.' '."<div class='columns'><ul class='price'> <li class='header'>".$name."</li> <li class='grey'>₦".$amount."</li><li>Access to all ".$name." content</li><li class='grey'><a href=\'".$slug."' class='button'>Subscribe</a></li></ul></div>";
+		$available_plans = ''.$available_plans.' '."<div class='columns'><ul class='price'> <li class='header'>".$name."</li> <li class='grey'>₦".$amount."</li><li>Access to all ".$name." content</li><li class='grey'><a style='color:white' href="."'\'".$slug." class='button'>Subscribe</a></li></ul></div>";
 	}
 
 	return $table_style.$table_header.$available_plans;

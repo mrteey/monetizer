@@ -211,6 +211,37 @@ function save_custom_boxes( $post_id ) {
 	}
 }
 
+// Before Deleting a post
+do_action( 'before_delete_post', 'delete_related_posts' );
+function delete_related_posts($postid){
+	$post = get_post($postid);
+	if ($post->post_type == 'monetizer'){
+		// Delete Related Paystack Form
+		$args = array(
+			'name' => $post->post_name,
+			'post_type' => 'paystack_form'
+		);
+		
+		$form = get_posts($args)[0];
+		if ($form){
+
+			wp_delete_post($form->ID);
+		}
+		
+		// Delete Related Payment Page
+		$args = array(
+			'name' => $post->post_name,
+			'post_type' => 'page'
+		);
+		
+		$page = get_posts($args)[0];
+		if ($page){
+			
+			wp_delete_post($page->ID);
+		}
+	}
+}
+
 // Create Profile Shortcode
 function monetizer_user_profile(){
 	//Buid User Profile

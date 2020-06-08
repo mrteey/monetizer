@@ -212,8 +212,8 @@ function save_custom_boxes( $post_id ) {
 }
 
 // Before Deleting a post
-do_action( 'before_delete_post', 'delete_related_monetizer_posts' );
-function delete_related_monetizer_posts($postid){
+add_action( 'wp_trash_post', 'trash_related_monetizer_posts' );
+function trash_related_monetizer_posts($postid){
 	$post = get_post($postid);
 	if ($post->post_type == 'monetizer'){
 		// Delete Related Paystack Form

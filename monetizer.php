@@ -451,8 +451,8 @@ if ( is_single() and !is_admin()) {
 add_action( 'template_redirect', 'redirect_from_plans_page' );
 function redirect_from_plans_page() {
 
-if ( is_page('Paid')){
-		if ( is_logged_in_user() == FALSE ) {
+if ( is_page('plans')){
+		if ( !is_user_logged_in() ) {
 			// UPDATE PLAN
 			wp_redirect( '/login', 301 ); 
   			exit;

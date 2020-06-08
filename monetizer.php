@@ -196,7 +196,7 @@ function monetizer_plans(){
 		$name = $plan->post_title;
 		$amount = get_post_meta($plan->ID, 'plan_amount', TRUE);
 		$slug = $plan->post_name;
-		$available_plans = ''.$available_plans.' '."<div class='columns'><ul class='price'> <li class='header'>".$name."</li> <li class='grey'>₦".$amount."</li><li>Access to all ".$name." content</li><li class='grey'><a style='color:white' href="."'\'".$slug." class='button'>Subscribe</a></li></ul></div>";
+		$available_plans = ''.$available_plans.' '."<div class='columns'><ul class='price'> <li class='header'>".$name."</li> <li class='grey'>₦".$amount."</li><li>Access to all ".$name." content</li><li class='grey'><a style='color:white' href=\'".$slug."' class='button'>Subscribe</a></li></ul></div>";
 	}
 
 	return $table_style.$table_header.$available_plans;

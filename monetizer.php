@@ -447,6 +447,16 @@ if ( is_single() and !is_admin()) {
 
 }
 
+//Take User to Account Info After Login
+add_action( 'wp_login', 'take_user_to_account' );
+function take_user_to_account() {
+
+	if ( !is_admin() ){
+			wp_redirect( '/user-account-info', 301 ); 
+			exit;
+		}
+	}
+
 //Redirect from plans page if not logged in
 add_action( 'template_redirect', 'redirect_from_plans_page' );
 function redirect_from_plans_page() {

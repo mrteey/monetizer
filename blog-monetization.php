@@ -212,8 +212,8 @@ function save_custom_boxes( $post_id ) {
 }
 
 // Before Deleting a post
-do_action( 'before_delete_post', 'delete_related_posts' );
-function delete_related_posts($postid){
+do_action( 'before_delete_post', 'delete_related_monetizer_posts' );
+function delete_related_monetizer_posts($postid){
 	$post = get_post($postid);
 	if ($post->post_type == 'monetizer'){
 		// Delete Related Paystack Form

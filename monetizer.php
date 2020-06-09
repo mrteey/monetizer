@@ -462,9 +462,9 @@ function redirect_from_premium_when_not_paid() {
 //Redirect from premium if not logged in
 add_action( 'template_redirect', 'redirect_from_premium_when_not_loggedin' );
 function redirect_from_premium_when_not_loggedin() {
-	if ( is_single() && is_user_logged_in()) {
+	if ( is_single() && !is_user_logged_in()) {
 		if (!has_category('Free') && !has_category('Uncategorized')){
-			wp_redirect( '/upgrade', 302 ); 
+			wp_redirect( '/login', 302 ); 
 			exit;
 		}
 	}

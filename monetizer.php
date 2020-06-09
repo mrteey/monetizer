@@ -11,10 +11,9 @@ License: GPL2
 
 // Create Plugin UI //Custom Post Page
 // Plans Creator
-add_action( 'init', 'blog_monetizer_custom_post_type' );
-add_filter( 'post_updated_messages', 'blog_monetizer_messages' );
+add_action( 'init', 'monetizer_custom_post_type' );
  
-function blog_monetizer_custom_post_type() {
+function monetizer_custom_post_type() {
     $labels = array(
         'name'               => 'Monetizer Plans',
         'singular_name'      => 'Monetizer Plan',
@@ -44,8 +43,9 @@ function blog_monetizer_custom_post_type() {
         register_post_type( 'monetizer', $args );
 }
 
+add_filter( 'post_updated_messages', 'monetizer_updated_messages' );
 // Plans Custom post updated message
-function plans_updated_messages( $messages ) {
+function monetizer_updated_messages( $messages ) {
 	global $post, $post_ID;
 	$messages['monetizer'] = array(
 	  0 => '', 
@@ -57,7 +57,6 @@ function plans_updated_messages( $messages ) {
 	);
 	return $messages;
   }
-  add_filter( 'post_updated_messages', 'plans_updated_messages' );
 
 //   Meta Boxes
 // Amount Box
@@ -122,6 +121,29 @@ function plan_callback_box_content( $post ) {
 	echo '<input type="text" readonly name="plan_callback" size="30" value="'.$callback.'" id="plan_callback" style="width:100%"/>';
   }
 
+
+// SHORTCODES
+// Create Profile Shortcode
+function monetizer_user_profile(){
+	//Buid User Profile
+	$current_user = wp_get_current_user();
+	$user_id = $current_user->ID;
+	$plan = get_user_meta($user_id, 'user_plan', true);
+	$payment_date = get_user_meta($user_id, 'payment_date', true);
+	//User plan info from custom post type ==> monetizer
+	$args = array(
+		'name' => $plan,
+		'post_type' => 'monetizer'
+	);
+	$plan_info = get_posts($args)[0];
+	$duration = get_post_meta($plan_info->ID, 'plan_duration', true);
+	$diff = time() - strtotime($payment_date);
+	$expiry = $duration - round($diff / (60 * 60 * 24));
+	
+	$profile = "<h3>Name: </h3> ".$current_user->user_firstname.' '.$current_user->user_lastname."<br><h3>Current Plan:</h3> ".$plan.'<br> <h3>Expires in: </h3>'.$expiry.' days';
+	return $profile;
+}
+add_shortcode('monetizer_user_profile', 'monetizer_user_profile');
 
 // Create Plans Page Shortcode
 function monetizer_plans(){
@@ -204,7 +226,7 @@ function monetizer_plans(){
 }
 add_shortcode('monetizer_plans', 'monetizer_plans');
 
-// Save Custom Boxes
+// On Save_Post action, Save custom meta boxes create paystack plan and related pages if paystack exist 
 add_action( 'save_post', 'save_custom_boxes' );
 function save_custom_boxes( $post_id ) {
   if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) 
@@ -220,11 +242,13 @@ function save_custom_boxes( $post_id ) {
     if ( !current_user_can( 'edit_post', $post_id ) )
     return;
   }
+	//   Get Post Data
   $post_title = $_POST['post_title'];
   $slug = strtolower(str_replace(" ", "-", $post_title));
   $callback_endpoint = "/paid?plan=".$slug;
   $plan_duration = $_POST['plan_duration'];
   $plan_amount = $_POST['plan_amount'];
+	//   Update POST META Info
   update_post_meta( $post_id, 'plan_duration', $plan_duration );
   update_post_meta( $post_id, 'plan_callback', $callback_endpoint );
   update_post_meta( $post_id, 'plan_amount', $plan_amount );
@@ -261,6 +285,7 @@ function save_custom_boxes( $post_id ) {
 			
 			// Insert the form into the database
 			$post_id = wp_insert_post( $form );
+			// Update form meta data
 			update_post_meta( $post_id, '_amount', $plan_amount );
 			update_post_meta( $post_id, '_redirect', $callback_endpoint );
 			update_post_meta( $post_id, '_currency', 'NGN' );
@@ -288,7 +313,7 @@ function save_custom_boxes( $post_id ) {
 	}
 }
 
-// Action before trashing a post
+// Action before trashing a plan
 add_action( 'wp_trash_post', 'trash_related_monetizer_posts' );
 function trash_related_monetizer_posts($postid){
 	$post = get_post($postid);
@@ -316,30 +341,16 @@ function trash_related_monetizer_posts($postid){
 			
 			wp_delete_post($page->ID);
 		}
+
+		// Delete Related Category
+		$cat_id = get_cat_ID( $slug );
+		// check if thanks page exists:
+		if ( $cat_id > 0 ){
+			// delete the category
+			wp_delete_category( $cat_id );
+		}
 	}
 }
-
-// Create Profile Shortcode
-function monetizer_user_profile(){
-	//Buid User Profile
-	$current_user = wp_get_current_user();
-	$user_id = $current_user->ID;
-	$plan = get_user_meta($user_id, 'user_plan', true);
-	$payment_date = get_user_meta($user_id, 'payment_date', true);
-	//User plan info from custom post type ==> monetizer
-	$args = array(
-		'name' => $plan,
-		'post_type' => 'monetizer'
-	);
-	$plan_info = get_posts($args)[0];
-	$duration = get_post_meta($plan_info->ID, 'plan_duration', true);
-	$diff = time() - strtotime($payment_date);
-	$expiry = $duration - round($diff / (60 * 60 * 24));
-	
-	$profile = "<h3>Name: </h3> ".$current_user->user_firstname.' '.$current_user->user_lastname."<br><h3>Current Plan:</h3> ".$plan.'<br> <h3>Expires in: </h3>'.$expiry.' days';
-	return $profile;
-}
-add_shortcode('monetizer_user_profile', 'monetizer_user_profile');
 
 // When plugin is activated
 function prepare_plugin() {
@@ -424,33 +435,45 @@ function prepare_plugin() {
 }
 register_activation_hook( __FILE__, 'prepare_plugin' );
 
-//Redirect from Single post if not logged in
-add_action( 'template_redirect', 'redirect_from_post' );
+// ALL AVAILABLE REDIRECTS
 
-function redirect_from_post() {
+//Redirect from premium if not paid
+add_action( 'template_redirect', 'redirect_from_premium_when_not_paid' );
+function redirect_from_premium_when_not_paid() {
 
-if ( is_single() and !is_admin()) {
-	//user is logged in
-	$user_id = get_current_user_id();
-	$user_plan = get_user_meta ($user_id, 'user_plan', true);
-	// check if current user has active plan
-	if ($user_plan == 'not paid' || empty($user_plan)){
-		wp_redirect( '/plans', 302 ); 
-		exit;
+	if ( is_single() && !is_admin() && is_user_logged_in()) {
+		//user is logged in
+		$user_id = get_current_user_id();
+		$user_plan = get_user_meta ($user_id, 'user_plan', true);
+		// check if current user has active plan
+		if ($user_plan == 'not paid' || empty($user_plan)){
+			wp_redirect( '/plans', 302 ); 
+			exit;
+		}
+		// Redirect them to upgrade if trying to view a premium post
+		elseif (!has_category($user_plan) && !has_category('Free') && !has_category('Uncategorized')){
+			wp_redirect( '/upgrade', 302 ); 
+			exit;
+		}
 	}
-	// Redirect them to upgrade if trying to view a premium post
-	elseif (!has_category($user_plan) && !has_category('Free') && !has_category('Uncategorized')){
-		wp_redirect( '/upgrade', 302 ); 
-		exit;
-	}
+
 }
+
+//Redirect from premium if not logged in
+add_action( 'template_redirect', 'redirect_from_premium_when_not_loggedin' );
+function redirect_from_premium_when_not_loggedin() {
+	if ( is_single() && is_user_logged_in()) {
+		if (!has_category('Free') && !has_category('Uncategorized')){
+			wp_redirect( '/upgrade', 302 ); 
+			exit;
+		}
+	}
 
 }
 
 //Take User to Account Info After Login
 add_action( 'wp_login', 'take_user_to_account' );
 function take_user_to_account() {
-
 	if ( !is_admin() ){
 			wp_redirect( '/user-account-info', 301 ); 
 			exit;
@@ -460,15 +483,13 @@ function take_user_to_account() {
 //Redirect from plans page if not logged in
 add_action( 'template_redirect', 'redirect_from_plans_page' );
 function redirect_from_plans_page() {
-
-if ( is_page('plans')){
+	if ( is_page('plans')){
 		if ( !is_user_logged_in() ) {
 			// UPDATE PLAN
 			wp_redirect( '/login', 301 ); 
   			exit;
-    }
-}
-
+    	}
+	}
 }
 
 
@@ -479,7 +500,7 @@ function redirect_from_paid_page() {
 	
 	$plan = $_GET['plan'];
 
-if ( is_page('Paid')){
+	if ( is_page('Paid')){
 		if ( $referer && $plan ) {
 			// UPDATE PLAN
 			$user_id = get_current_user_id();
@@ -488,14 +509,14 @@ if ( is_page('Paid')){
 			update_user_meta( $user_id, 'payment_date', $currentdate );
 			wp_redirect( '/thanks', 301 ); 
   			exit;
-    }
+    	}
+	}
 }
 
-}
 
-
+// PLAN VALIDITY
 //Check User Validity On Load
-
+add_action('wp', 'check_plan_validity');
 function check_plan_validity(){
 	$current_user = wp_get_current_user();
 	$user_id = $current_user->ID;
@@ -506,7 +527,6 @@ function check_plan_validity(){
 		'post_type' => 'monetizer'
 	);
 	$plan = get_posts($args)[0];
-
 	if ($plan){
 		$duration = get_post_meta($plan->ID, 'plan_duration', true);
 		$payment_date = get_user_meta($user_id, 'payment_date', true);
@@ -518,8 +538,5 @@ function check_plan_validity(){
 			update_user_meta( $user_id, 'user_plan', 'not paid' );
 		}
 	}
-	
 }
-
-add_action('wp', 'check_plan_validity');
 

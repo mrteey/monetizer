@@ -101,6 +101,28 @@ function plan_duration_box_content( $post ) {
 	echo '<input type="number" name="plan_duration" size="30" id="plan_duration" style="width:100%" placeholder="Enter plan duration in days" value="'.$duration.'"/>';
   }
 
+
+  //Plan Description box
+add_action( 'add_meta_boxes', 'plan_description_box' );
+function plan_description_box() {
+    add_meta_box( 
+        'plan_description_box',
+        __( 'Callback endpoint', 'myplugin_textdomain' ),
+        'plan_description_box_content',
+        'monetizer',
+        'normal',
+        'high'
+    );
+} 
+
+function plan_description_box_content( $post ) {
+	$description = get_post_meta( get_the_ID(), 'plan_description', TRUE );
+	wp_nonce_field( plugin_basename( __FILE__ ), 'plan_description_box_content_nonce' );
+	echo '<label for="plan_description"></label>';
+	echo '<textarea readonly name="plan_description" size="30" id="plan_description" style="width:100%">'.$description.'</textarea>';
+  }
+
+
 // Callback url box
 add_action( 'add_meta_boxes', 'plan_callback_box' );
 function plan_callback_box() {
@@ -218,8 +240,9 @@ function monetizer_plans(){
 	foreach ($plans as $plan){
 		$name = $plan->post_title;
 		$amount = get_post_meta($plan->ID, 'plan_amount', TRUE);
+		$description = get_post_meta($plan->ID, 'plan_description', TRUE);
 		$slug = $plan->post_name;
-		$available_plans = ''.$available_plans.' '."<div class='columns'><ul class='price'> <li class='header'>".$name."</li> <li class='grey'>₦".$amount."</li><li>Access to all ".$name." content</li><li class='grey'><a style='color:white' href=\'".$slug."' class='button'>Subscribe</a></li></ul></div>";
+		$available_plans = ''.$available_plans.' '."<div class='columns'><ul class='price'> <li class='header'>".$name."</li> <li class='grey'>₦".$amount."</li><li>".$description."</li><li class='grey'><a style='color:white' href=\'".$slug."' class='button'>Subscribe</a></li></ul></div>";
 	}
 
 	return $table_style.$table_header.$available_plans;
@@ -247,11 +270,13 @@ function save_custom_boxes( $post_id ) {
   $slug = strtolower(str_replace(" ", "-", $post_title));
   $callback_endpoint = "/paid?plan=".$slug;
   $plan_duration = $_POST['plan_duration'];
+  $plan_description = $_POST['plan_description'];
   $plan_amount = $_POST['plan_amount'];
 	//   Update POST META Info
   update_post_meta( $post_id, 'plan_duration', $plan_duration );
   update_post_meta( $post_id, 'plan_callback', $callback_endpoint );
   update_post_meta( $post_id, 'plan_amount', $plan_amount );
+  update_post_meta( $post_id, 'plan_description', $plan_description );
   // Add slug to categories
   	$cat_id = get_cat_ID( $slug );
 	// check if thanks page exists:

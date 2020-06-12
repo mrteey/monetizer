@@ -162,10 +162,56 @@ function monetizer_user_profile(){
 	$diff = time() - strtotime($payment_date);
 	$expiry = $duration - round($diff / (60 * 60 * 24));
 	
-	$profile = "<h3>Name: </h3> ".$current_user->user_firstname.' '.$current_user->user_lastname."<br><h3>Current Plan:</h3> ".$plan.'<br> <h3>Expires in: </h3>'.$expiry.' days';
+	$profile = "<h4>Name: </h4> ".$current_user->user_firstname.' '.$current_user->user_lastname."<br><h4>Current Plan:</h4> ".$plan.'<br> <h3>Expires in: </h3>'.$expiry.' days';
 	return $profile;
 }
 add_shortcode('monetizer_user_profile', 'monetizer_user_profile');
+
+// User email Shortcode
+function monetizer_user_name(){
+	//Get User Name
+	$current_user = wp_get_current_user();
+	return $current_user->user_firstname.' '.$current_user->user_lastname;
+}
+add_shortcode('monetizer_user_name', 'monetizer_user_name');
+
+// User email Shortcode
+function monetizer_user_email(){
+	//Get User email
+	$current_user = wp_get_current_user();
+	return $current_user->user_email;
+}
+add_shortcode('monetizer_user_email', 'monetizer_user_email');
+
+// User plan Shortcode
+function monetizer_user_plan(){
+	//Get User Plan
+	$current_user = wp_get_current_user();
+	$user_id = $current_user->ID;
+	$plan = get_user_meta($user_id, 'user_plan', true);
+	return $plan;
+}
+add_shortcode('monetizer_user_plan', 'monetizer_user_plan');
+
+// User plan Shortcode
+function monetizer_user_plan_expiry(){
+	//Get User Plan
+	$current_user = wp_get_current_user();
+	$user_id = $current_user->ID;
+	$plan = get_user_meta($user_id, 'user_plan', true);
+	$payment_date = get_user_meta($user_id, 'payment_date', true);
+	//User plan info from custom post type ==> monetizer
+	$args = array(
+		'name' => $plan,
+		'post_type' => 'monetizer'
+	);
+	$plan_info = get_posts($args)[0];
+	$duration = get_post_meta($plan_info->ID, 'plan_duration', true);
+	$diff = time() - strtotime($payment_date);
+	$expiry = $duration - round($diff / (60 * 60 * 24));
+	return $expiry;
+}
+add_shortcode('monetizer_user_plan_expiry', 'monetizer_user_plan_expiry');
 
 // Create Plans Page Shortcode
 function monetizer_plans(){

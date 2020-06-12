@@ -380,18 +380,18 @@ function trash_related_monetizer_posts($postid){
 // When plugin is activated
 function prepare_plugin() {
 
-	// Create Free Category For Free Posts
-	$slug = 'Free';
-	$cat_id = get_cat_ID( $slug );
-	// check if thanks page exists:
-	if ($cat_id == 0){
-		// Create the page object
-		$cat = array(
-			'cat_name'     => $slug
-		);
-		// Insert the category into the database
-		wp_insert_category( $cat );
-	}
+	// // Create Free Category For Free Posts
+	// $slug = 'Free';
+	// $cat_id = get_cat_ID( $slug );
+	// // check if thanks page exists:
+	// if ($cat_id == 0){
+	// 	// Create the page object
+	// 	$cat = array(
+	// 		'cat_name'     => $slug
+	// 	);
+	// 	// Insert the category into the database
+	// 	wp_insert_category( $cat );
+	// }
 
 	// Check whether this pages exist
 	$thanks = get_page_by_path( 'thanks' );
@@ -465,50 +465,70 @@ register_activation_hook( __FILE__, 'prepare_plugin' );
 //Redirect from premium if not paid
 add_action( 'template_redirect', 'redirect_from_premium_when_not_paid' );
 function redirect_from_premium_when_not_paid() {
+	if (is_single()){
+	// Get Current User
+	$user_id = get_current_user_id();
+	$user_plan = get_user_meta ($user_id, 'user_plan', TRUE);
+	
+	// Get all monetizer plans
+	$args = array(
+		'post_type' => 'monetizer',
+		'posts_per_page' => -1
+	);
+	$plans = get_posts($args);
 
-	if ( is_single() && !is_admin() && is_user_logged_in()) {
-		//user is logged in
-		$user_id = get_current_user_id();
-		$user_plan = get_user_meta ($user_id, 'user_plan', true);
-		// check if current user has active plan
-		if ($user_plan == 'not paid' || empty($user_plan)){
-			wp_redirect( '/plans', 302 ); 
-			exit;
-		}
-		// Redirect them to upgrade if trying to view a premium post
-		elseif (!has_category($user_plan) && !has_category('Free') && !has_category('Uncategorized')){
+	foreach ($plans as $plan){
+		$slug = $plan->post_name;
+		if (has_category($slug) && !has_category($user_plan)){
 			wp_redirect( '/upgrade', 302 ); 
 			exit;
 		}
 	}
 
-}
+	// if ( is_single() && !current_user_can('administrator') && is_user_logged_in()) {
+	// 	//user is logged in
+	// 	$user_id = get_current_user_id();
+	// 	$user_plan = get_user_meta ($user_id, 'user_plan', true);
+	// 	// check if current user has active plan
+	// 	if ($user_plan == 'not paid' || empty($user_plan)){
+	// 		wp_redirect( '/plans', 302 ); 
+	// 		exit;
+	// 	}
+	// 	// Redirect them to upgrade if trying to view a premium post
+	// 	elseif (!has_category($user_plan) && !has_category('Free') && !has_category('Uncategorized')){
+	// 		wp_redirect( '/upgrade', 302 ); 
+	// 		exit;
+	// 	}
+	// }
 
-//Redirect from premium if not logged in
-add_action( 'template_redirect', 'redirect_from_premium_when_not_loggedin' );
-function redirect_from_premium_when_not_loggedin() {
-	if ( is_single() && !is_user_logged_in()) {
-		if (!has_category('Free') && !has_category('Uncategorized')){
-			wp_redirect( '/login', 302 ); 
-			exit;
-		}
 	}
-
 }
+
+// //Redirect from premium if not logged in
+// add_action( 'template_redirect', 'redirect_from_premium_when_not_loggedin' );
+// function redirect_from_premium_when_not_loggedin() {
+// 	if ( is_single() && !is_user_logged_in()) {
+// 		if (!has_category('Free') && !has_category('Uncategorized')){
+// 			wp_redirect( '/login', 302 ); 
+// 			exit;
+// 		}
+// 	}
+
+// }
 
 //Take User to Account Info After Login
 add_action( 'wp_login', 'take_user_to_account' );
 function take_user_to_account() {
-	if ( !is_admin() ){
+	if ( !current_user_can('administrator') ){
 			wp_redirect( '/user-account-info', 301 ); 
 			exit;
 		}
 	}
 
 //Redirect from plans page if not logged in
-add_action( 'template_redirect', 'redirect_from_plans_page' );
-function redirect_from_plans_page() {
-	if ( is_page('plans')){
+add_action( 'template_redirect', 'redirect_from_plans_upgrade_page' );
+function redirect_from_plans_upgrade_page() {
+	if ( is_page('plans') || is_page('upgrade')){
 		if ( !is_user_logged_in() ) {
 			// UPDATE PLAN
 			wp_redirect( '/login', 301 ); 
@@ -525,7 +545,7 @@ function redirect_from_paid_page() {
 	
 	$plan = $_GET['plan'];
 
-	if ( is_page('Paid')){
+	if ( is_page('Paid') && !current_user_can('administrator')){
 		if ( $referer && $plan ) {
 			// UPDATE PLAN
 			$user_id = get_current_user_id();

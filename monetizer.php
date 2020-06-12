@@ -4,7 +4,7 @@ Plugin Name: Monetizer
 Plugin URI: https://mrteey.com
 Description: Blog Monetization Plug, Allows View of Single Post only by registred users.
 Author: Mr.Teey
-Version: 2.6.1
+Version: 2.6.2
 Author URI: https://mrteey.com
 License: GPL2
 */
@@ -107,7 +107,7 @@ add_action( 'add_meta_boxes', 'plan_description_box' );
 function plan_description_box() {
     add_meta_box( 
         'plan_description_box',
-        __( 'Callback endpoint', 'myplugin_textdomain' ),
+        __( 'Plan Description', 'myplugin_textdomain' ),
         'plan_description_box_content',
         'monetizer',
         'normal',
@@ -119,7 +119,7 @@ function plan_description_box_content( $post ) {
 	$description = get_post_meta( get_the_ID(), 'plan_description', TRUE );
 	wp_nonce_field( plugin_basename( __FILE__ ), 'plan_description_box_content_nonce' );
 	echo '<label for="plan_description"></label>';
-	echo '<textarea readonly name="plan_description" size="30" id="plan_description" style="width:100%">'.$description.'</textarea>';
+	echo '<textarea rows="10" name="plan_description" size="30" id="plan_description" style="width:100%">'.$description.'</textarea>';
   }
 
 
@@ -466,24 +466,34 @@ register_activation_hook( __FILE__, 'prepare_plugin' );
 add_action( 'template_redirect', 'redirect_from_premium_when_not_paid' );
 function redirect_from_premium_when_not_paid() {
 	if (is_single()){
-	// Get Current User
-	$user_id = get_current_user_id();
-	$user_plan = get_user_meta ($user_id, 'user_plan', TRUE);
-	
-	// Get all monetizer plans
-	$args = array(
-		'post_type' => 'monetizer',
-		'posts_per_page' => -1
-	);
-	$plans = get_posts($args);
+		// Get all monetizer plans
+		$args = array(
+			'post_type' => 'monetizer',
+			'posts_per_page' => -1
+		);
+		$plans = get_posts($args);
 
-	foreach ($plans as $plan){
-		$slug = $plan->post_name;
-		if (has_category($slug) && !has_category($user_plan)){
-			wp_redirect( '/upgrade', 302 ); 
-			exit;
+		if (is_user_logged_in() && !current_user_can('administrator')){
+			// Get Current User
+			$user_id = get_current_user_id();
+			$user_plan = get_user_meta($user_id, 'user_plan', TRUE);
+
+			foreach ($plans as $plan){
+				$slug = $plan->post_name;
+				if (has_category($slug) && !has_category($user_plan)){
+					wp_redirect( '/upgrade', 302 ); 
+					exit;
+				}
+			}
+		}elseif(!is_user_logged_in()){
+			foreach ($plans as $plan){
+				$slug = $plan->post_name;
+				if (has_category($slug)){
+					wp_redirect( '/login', 302 ); 
+					exit;
+				}
+			}
 		}
-	}
 
 	// if ( is_single() && !current_user_can('administrator') && is_user_logged_in()) {
 	// 	//user is logged in
@@ -525,15 +535,22 @@ function take_user_to_account() {
 		}
 	}
 
-//Redirect from plans page if not logged in
-add_action( 'template_redirect', 'redirect_from_plans_upgrade_page' );
-function redirect_from_plans_upgrade_page() {
-	if ( is_page('plans') || is_page('upgrade')){
-		if ( !is_user_logged_in() ) {
-			// UPDATE PLAN
-			wp_redirect( '/login', 301 ); 
-  			exit;
-    	}
+//Redirect from payment page if not logged in
+add_action( 'template_redirect', 'redirect_from_payment_page' );
+function redirect_from_payment_page() {
+	// Get all monetizer plans
+	$args = array(
+		'post_type' => 'monetizer',
+		'posts_per_page' => -1
+	);
+	$plans = get_posts($args);
+
+	foreach ($plans as $plan){
+		$slug = $plan->post_name;
+		if (is_page($slug) && !is_user_logged_in()){
+			wp_redirect( '/login', 302 ); 
+			exit;
+		}
 	}
 }
 
@@ -545,7 +562,7 @@ function redirect_from_paid_page() {
 	
 	$plan = $_GET['plan'];
 
-	if ( is_page('Paid') && !current_user_can('administrator')){
+	if ( is_page('Paid') ){
 		if ( $referer && $plan ) {
 			// UPDATE PLAN
 			$user_id = get_current_user_id();
